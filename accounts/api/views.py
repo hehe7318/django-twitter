@@ -8,7 +8,6 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
 from django.contrib.auth import (
     authenticate as django_authenticate,
     login as django_login,
@@ -54,13 +53,6 @@ class AccountViewSet(viewsets.ViewSet):
         # validation ok, login
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
-
-        if not User.objects.filter(username=username).exists():
-            return Response({
-                "success": False,
-                "message": "User does not exists",
-            }, status=400)
-
         user = django_authenticate(username=username, password=password)
         if not user or user.is_anonymous:
             return Response({
