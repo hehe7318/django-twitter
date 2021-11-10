@@ -53,3 +53,4 @@ class LoginSerializer(serializers.Serializer):
                 'username': 'User does not exist.'
             })
         return data
+
