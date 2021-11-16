@@ -13,7 +13,7 @@ class TweetApiTests(TestCase):
     def setUp(self):
         self.anonymous_client = APIClient()
 
-        self.user1 = self.create_user('user1', 'user1@jiuzhang.com')
+        self.user1 = self.create_user('user1', 'user1@twitter.com')
         self.tweets1 = [
             self.create_tweet(self.user1)
             for i in range(3)
@@ -21,7 +21,7 @@ class TweetApiTests(TestCase):
         self.user1_client = APIClient()
         self.user1_client.force_authenticate(self.user1)
 
-        self.user2 = self.create_user('user2', 'user2@jiuzhang.com')
+        self.user2 = self.create_user('user2', 'user2@twitter.com')
         self.tweets2 = [
             self.create_tweet(self.user2)
             for i in range(2)
@@ -62,7 +62,7 @@ class TweetApiTests(TestCase):
         # 正常发帖
         tweets_count = Tweet.objects.count()
         response = self.user1_client.post(TWEET_CREATE_API, {
-            'content': 'Hello World, this is my first tweet!'
+            'content': 'This is a tweet!~'
         })
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['user']['id'], self.user1.id)
