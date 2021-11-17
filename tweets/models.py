@@ -10,7 +10,7 @@ class Tweet(models.Model):
         null=True,
         help_text='who posts this tweet',
     )
-    content = models.CharField(max_length=255)
+    content = models.TextField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
