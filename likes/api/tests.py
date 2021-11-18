@@ -2,6 +2,7 @@ from testing.testcases import TestCase
 
 
 LIKE_BASE_URL = '/api/likes/'
+LIKE_CANCEL_URL = '/api/likes/cancel/'
 
 
 class LikeApiTests(TestCase):
@@ -73,3 +74,59 @@ class LikeApiTests(TestCase):
         self.assertEqual(comment.like_set.count(), 1)
         self.he_client.post(LIKE_BASE_URL, data)
         self.assertEqual(comment.like_set.count(), 2)
+
+    def test_cancel(self):
+        tweet = self.create_tweet(self.xuanqi)
+        comment = self.create_comment(self.he, tweet)
+        like_comment_data = {'content_type': 'comment', 'object_id': comment.id}
+        like_tweet_data = {'content_type': 'tweet', 'object_id': tweet.id}
+        self.xuanqi_client.post(LIKE_BASE_URL, like_comment_data)
+        self.he_client.post(LIKE_BASE_URL, like_tweet_data)
+        self.assertEqual(tweet.like_set.count(), 1)
+        self.assertEqual(comment.like_set.count(), 1)
+
+        # login required
+        response = self.anonymous_client.post(LIKE_CANCEL_URL, like_comment_data)
+        self.assertEqual(response.status_code, 403)
+
+        # get is not allowed
+        response = self.xuanqi_client.get(LIKE_CANCEL_URL, like_comment_data)
+        self.assertEqual(response.status_code, 405)
+
+        # wrong content_type
+        response = self.xuanqi_client.post(LIKE_CANCEL_URL, {
+            'content_type': 'wrong',
+            'object_id': 1,
+        })
+        self.assertEqual(response.status_code, 400)
+
+        # wrong object_id
+        response = self.xuanqi_client.post(LIKE_CANCEL_URL, {
+            'content_type': 'comment',
+            'object_id': -1,
+        })
+        self.assertEqual(response.status_code, 400)
+
+        # he has not liked before
+        response = self.he_client.post(LIKE_CANCEL_URL, like_comment_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(tweet.like_set.count(), 1)
+        self.assertEqual(comment.like_set.count(), 1)
+
+        # successfully canceled
+        response = self.xuanqi_client.post(LIKE_CANCEL_URL, like_comment_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(tweet.like_set.count(), 1)
+        self.assertEqual(comment.like_set.count(), 0)
+
+        # xuanqi has not liked before
+        response = self.xuanqi_client.post(LIKE_CANCEL_URL, like_tweet_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(tweet.like_set.count(), 1)
+        self.assertEqual(comment.like_set.count(), 0)
+
+        # he's like has been canceled
+        response = self.he_client.post(LIKE_CANCEL_URL, like_tweet_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(tweet.like_set.count(), 0)
+        self.assertEqual(comment.like_set.count(), 0)
