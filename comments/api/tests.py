@@ -10,14 +10,14 @@ COMMENT_URL = '/api/comments/'
 class CommentApiTests(TestCase):
 
     def setUp(self):
-        self.linghu = self.create_user('linghu')
-        self.linghu_client = APIClient()
-        self.linghu_client.force_authenticate(self.linghu)
-        self.dongxie = self.create_user('dongxie')
-        self.dongxie_client = APIClient()
-        self.dongxie_client.force_authenticate(self.dongxie)
+        self.xuanqi = self.create_user('xuanqi')
+        self.xuanqi_client = APIClient()
+        self.xuanqi_client.force_authenticate(self.xuanqi)
+        self.he = self.create_user('he')
+        self.he_client = APIClient()
+        self.he_client.force_authenticate(self.he)
 
-        self.tweet = self.create_tweet(self.linghu)
+        self.tweet = self.create_tweet(self.xuanqi)
 
     def test_create(self):
         # 匿名不可以创建
@@ -25,19 +25,19 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
         # 啥参数都没带不行
-        response = self.linghu_client.post(COMMENT_URL)
+        response = self.xuanqi_client.post(COMMENT_URL)
         self.assertEqual(response.status_code, 400)
 
         # 只带 tweet_id 不行
-        response = self.linghu_client.post(COMMENT_URL, {'tweet_id': self.tweet.id})
+        response = self.xuanqi_client.post(COMMENT_URL, {'tweet_id': self.tweet.id})
         self.assertEqual(response.status_code, 400)
 
         # 只带 content 不行
-        response = self.linghu_client.post(COMMENT_URL, {'content': '1'})
+        response = self.xuanqi_client.post(COMMENT_URL, {'content': '1'})
         self.assertEqual(response.status_code, 400)
 
         # content 太长不行
-        response = self.linghu_client.post(COMMENT_URL, {
+        response = self.xuanqi_client.post(COMMENT_URL, {
             'tweet_id': self.tweet.id,
             'content': '1' * 141,
         })
@@ -45,17 +45,17 @@ class CommentApiTests(TestCase):
         self.assertEqual('content' in response.data['errors'], True)
 
         # tweet_id 和 content 都带才行
-        response = self.linghu_client.post(COMMENT_URL, {
+        response = self.xuanqi_client.post(COMMENT_URL, {
             'tweet_id': self.tweet.id,
             'content': '1',
         })
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['user']['id'], self.linghu.id)
+        self.assertEqual(response.data['user']['id'], self.xuanqi.id)
         self.assertEqual(response.data['tweet_id'], self.tweet.id)
         self.assertEqual(response.data['content'], '1')
 
     def test_destroy(self):
-        comment = self.create_comment(self.linghu, self.tweet)
+        comment = self.create_comment(self.xuanqi, self.tweet)
         url = '{}{}/'.format(COMMENT_URL, comment.id)
 
         # 匿名不可以删除
@@ -63,18 +63,18 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
         # 非本人不能删除
-        response = self.dongxie_client.delete(url)
+        response = self.he_client.delete(url)
         self.assertEqual(response.status_code, 403)
 
         # 本人可以删除
         count = Comment.objects.count()
-        response = self.linghu_client.delete(url)
+        response = self.xuanqi_client.delete(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Comment.objects.count(), count - 1)
 
     def test_update(self):
-        comment = self.create_comment(self.linghu, self.tweet, 'original')
-        another_tweet = self.create_tweet(self.dongxie)
+        comment = self.create_comment(self.xuanqi, self.tweet, 'original')
+        another_tweet = self.create_tweet(self.he)
         url = '{}{}/'.format(COMMENT_URL, comment.id)
 
         # 使用 put 的情况下
@@ -82,7 +82,7 @@ class CommentApiTests(TestCase):
         response = self.anonymous_client.put(url, {'content': 'new'})
         self.assertEqual(response.status_code, 403)
         # 非本人不能更新
-        response = self.dongxie_client.put(url, {'content': 'new'})
+        response = self.he_client.put(url, {'content': 'new'})
         self.assertEqual(response.status_code, 403)
         comment.refresh_from_db()
         self.assertNotEqual(comment.content, 'new')
@@ -90,16 +90,16 @@ class CommentApiTests(TestCase):
         before_updated_at = comment.updated_at
         before_created_at = comment.created_at
         now = timezone.now()
-        response = self.linghu_client.put(url, {
+        response = self.xuanqi_client.put(url, {
             'content': 'new',
-            'user_id': self.dongxie.id,
+            'user_id': self.he.id,
             'tweet_id': another_tweet.id,
             'created_at': now,
         })
         self.assertEqual(response.status_code, 200)
         comment.refresh_from_db()
         self.assertEqual(comment.content, 'new')
-        self.assertEqual(comment.user, self.linghu)
+        self.assertEqual(comment.user, self.xuanqi)
         self.assertEqual(comment.tweet, self.tweet)
         self.assertEqual(comment.created_at, before_created_at)
         self.assertNotEqual(comment.created_at, now)
@@ -119,9 +119,9 @@ class CommentApiTests(TestCase):
         self.assertEqual(len(response.data['comments']), 0)
 
         # 评论按照时间顺序排序
-        self.create_comment(self.linghu, self.tweet, '1')
-        self.create_comment(self.dongxie, self.tweet, '2')
-        self.create_comment(self.dongxie, self.create_tweet(self.dongxie), '3')
+        self.create_comment(self.xuanqi, self.tweet, '1')
+        self.create_comment(self.he, self.tweet, '2')
+        self.create_comment(self.he, self.create_tweet(self.he), '3')
         response = self.anonymous_client.get(COMMENT_URL, {
             'tweet_id': self.tweet.id,
         })
@@ -132,6 +132,6 @@ class CommentApiTests(TestCase):
         # 同时提供 user_id 和 tweet_id 只有 tweet_id 会在 filter 中生效
         response = self.anonymous_client.get(COMMENT_URL, {
             'tweet_id': self.tweet.id,
-            'user_id': self.linghu.id,
+            'user_id': self.xuanqi.id,
         })
         self.assertEqual(len(response.data['comments']), 2)
