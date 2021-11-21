@@ -4,10 +4,9 @@ from django.db import models
 from likes.models import Like
 from utils.time_helpers import utc_now
 
-
 class Tweet(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    content = models.TextField(max_length=255)
+    content = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
