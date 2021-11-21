@@ -10,6 +10,8 @@ def required_params(request_attr='query_params', params=None):
     就是被 @required_params 包裹起来的函数 view_func
     """
 
+    # 从效果上来说，参数中写 params=[] 很多时候也没有太大问题
+    # 但是从好的编程习惯上来说，函数的参数列表中的值不能是一个 mutable 的参数
     if params is None:
         params = []
 

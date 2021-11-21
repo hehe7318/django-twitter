@@ -2,20 +2,10 @@ from django.contrib.auth.models import User
 from rest_framework import serializers, exceptions
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
-
-
-class UserSerializerForTweet(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username']
-
-
-class UserSerializerForFriendship(UserSerializerForTweet):
-    pass
+        fields = ('id', 'username', 'email')
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -27,16 +17,15 @@ class SignupSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'password')
 
-    # will be called when is_valid is called
     def validate(self, data):
         # TODO<HOMEWORK> 增加验证 username 是不是只由给定的字符集合构成
         if User.objects.filter(username=data['username'].lower()).exists():
             raise exceptions.ValidationError({
-                'username': 'This username has been occupied.'
+                'message': 'This email address has been occupied.'
             })
         if User.objects.filter(email=data['email'].lower()).exists():
             raise exceptions.ValidationError({
-                'email': 'This email address has been occupied.'
+                'message': 'This email address has been occupied.'
             })
         return data
 
@@ -56,11 +45,3 @@ class SignupSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
-
-    def validate(self, data):
-        if not User.objects.filter(username=data['username'].lower()).exists():
-            raise exceptions.ValidationError({
-                'username': 'User does not exist.'
-            })
-        return data
-
