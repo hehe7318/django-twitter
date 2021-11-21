@@ -1,6 +1,5 @@
-from testing.testcases import TestCase
 from rest_framework.test import APIClient
-from django.contrib.auth.models import User
+from testing.testcases import TestCase
 
 
 LOGIN_URL = '/api/accounts/login/'
@@ -16,7 +15,7 @@ class AccountApiTests(TestCase):
         self.client = APIClient()
         self.user = self.create_user(
             username='admin',
-            email='xuanqihe@test.com',
+            email='admin@jiuzhang.com',
             password='correct password',
         )
 
@@ -47,7 +46,7 @@ class AccountApiTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.data['user'], None)
-        self.assertEqual(response.data['user']['email'], 'xuanqihe@test.com')
+        self.assertEqual(response.data['user']['email'], 'admin@jiuzhang.com')
         # 验证已经登录了
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.data['has_logged_in'], True)
@@ -76,7 +75,7 @@ class AccountApiTests(TestCase):
     def test_signup(self):
         data = {
             'username': 'someone',
-            'email': 'xuanqi@test.com',
+            'email': 'someone@jiuzhang.com',
             'password': 'any password',
         }
         # 测试 get 请求失败
@@ -85,7 +84,7 @@ class AccountApiTests(TestCase):
 
         # 测试错误的邮箱
         response = self.client.post(SIGNUP_URL, {
-            'username': 'xuanqi',
+            'username': 'someone',
             'email': 'not a correct email',
             'password': 'any password'
         })
@@ -94,8 +93,8 @@ class AccountApiTests(TestCase):
 
         # 测试密码太短
         response = self.client.post(SIGNUP_URL, {
-            'username': 'xuanqi',
-            'email': 'xuanqi@test.com',
+            'username': 'someone',
+            'email': 'someone@jiuzhang.com',
             'password': '123',
         })
         # print(response.data)
@@ -103,8 +102,8 @@ class AccountApiTests(TestCase):
 
         # 测试用户名太长
         response = self.client.post(SIGNUP_URL, {
-            'username': 'username is tooooooooooooo loooooooooooooooong',
-            'email': 'xuanqi@test.com',
+            'username': 'username is tooooooooooooooooo loooooooong',
+            'email': 'someone@jiuzhang.com',
             'password': 'any password',
         })
         # print(response.data)

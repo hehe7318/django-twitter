@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 
 
 class Friendship(models.Model):
-    # from_user关注to_user
     from_user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
